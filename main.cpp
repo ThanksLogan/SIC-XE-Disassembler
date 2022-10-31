@@ -12,6 +12,9 @@
 #include <bitset>
 #include <unordered_map>
 #include <vector>
+#include <iomanip>
+#include <cctype>
+
 using namespace std;
 //all helper functions
 //Lets say LOCCTR is established at 0000, based on readinig the text lines starting address
@@ -44,6 +47,26 @@ public: //access specifier
 };
 
 string hexToBinary = "0123456789ABCDEF";
+int HexStringtoDec(string A){ //translates a given hex string to its decimal value for computations.
+    int out;
+    stringstream strm;
+    strm << std::hex << A;
+    strm >> out;
+    return out;
+}
+string DecToHex(int A){ //translates a given decimal number into a 4-digit, all uppercase, hex number
+    stringstream strm;
+    strm<< std::hex << A; // int decimal_value
+    string out ( strm.str() );
+    if(out.length() == 1)
+        out.insert(0,3, '0');
+    if(out.length() == 2)
+        out.insert(0,2, '0');
+    if(out.length() == 3)
+        out.insert(0,1, '0');
+    transform(out.begin(), out.end(), out.begin(), ::toupper);
+    return out;
+}
 string BinaryToHex(string binary){
     string tmp;
     int hexIndex;
@@ -213,7 +236,7 @@ string findTAAM3(string A){
         return aMode;
     }
     if (objInBinary.at(8) == '1' && objInBinary.at(10) == '1'){
-        aMode = "PC_indexed";
+        aMode = "PC_Indexed";
         return aMode;
     }
     if (objInBinary.at(8) == '1' &&  A.length() > 4){
@@ -244,8 +267,195 @@ string findTAAM4(string A){
     return aMode;
 
 }
+string printDat(string loctr, string ins, string at, string am, string form, string objct, unordered_map<string, vector<string>> imap){
+    //this is where we host all of our ridiculous if statements
+    //skiipping line 1 header
+    //storing line into vector array
+    vector<string> printedLine = {"", "", "", "", ""};
+    vector<string> test1;
+    //string disp;
+    int intLoc; //integer type of location counter in decimal
+    string varName;
+    int valPC;
+    int valBase;
+    intLoc = HexStringtoDec(loctr);
+    //string  = s4.str();
+    if(form == "2")
+        valPC = (intLoc + 2);
+    if(form == "3")
+        valPC = (intLoc + 3);
+    if(form == "4")
+        valPC = (intLoc + 4);
 
-string Dissassembler(string T){
+    if(imap.count(loctr) > 0){
+        //found a match, so we print the imap.at(loctr)
+        //printedLine.insert(1, imap.at(loctr, 2));
+    }
+    if(form == "2"){
+
+    }
+    if(form == "4"){
+        printedLine.at(2) += '+';
+    }
+    if(at == "Immediate"){
+        printedLine.at(3) += '#';
+    }
+    if(at == "Indirect")
+        printedLine.at(3) += '@';
+    if(am == "Indexed" || am == "Base_Indexed" ||am == "PC_Indexed"){
+        printedLine.at(3) += ', X';
+    }
+    //to find symbol name
+    //we take addressing type, and figure out TA and displacement to get the address of what to write.
+    //example: 0004         STL     RETADR        1722BF
+    //we see its simple and PC relative. Thus, we take the value of PC (which is adding 2,3,or 4 to locctr)
+    //we'll make a quick guide: simple and PC: disp = TA + PC = 02C6 (which is where RETARD is hosted) in table
+    //thus, we'll add it to column 3 of the printed line vector
+    //a couple other conditons: if its simple, but not pc or base it could just be TA
+
+    if(at == "Simple"){
+        if(am == "PC"){
+            //disp = (TA) + (PC)
+            string iTA = objct.substr(3,3);
+            int intTA = HexStringtoDec(iTA);
+            int intDisp = intTA + valPC;
+            string disp = DecToHex(intDisp);
+            vector<string> test2;
+            if(imap.count(disp) > 0){
+                test2 = imap.at(disp);
+                string varName = test2.at(0);
+                printedLine.at(3) += varName;
+            }
+        }
+        if(am == "Base"){
+            string iTA = objct.substr(3,3);
+            int intTA = HexStringtoDec(iTA);
+            int intDisp = intTA + valBase;
+            string disp = DecToHex(intDisp);
+            vector<string> test2;
+            if(imap.count(disp) > 0){
+                test2 = imap.at(disp);
+                string varName = test2.at(0);
+                printedLine.at(3) += varName;
+            }
+        }
+        //TODO
+        if(am == "PC_Indexed"){
+            string iTA = objct.substr(3,3);
+            int intTA = HexStringtoDec(iTA);
+            int intDisp = intTA + valPC;
+            string disp = DecToHex(intDisp);
+            vector<string> test2;
+            if(imap.count(disp) > 0){
+                test2 = imap.at(disp);
+                string varName = test2.at(0);
+                printedLine.at(3) += varName;
+            }
+        }
+        //TODO
+        if(am == "Base_Indexed"){
+            string iTA = objct.substr(3,3);
+            int intTA = HexStringtoDec(iTA);
+            int intDisp = intTA + valBase;
+            string disp = DecToHex(intDisp);
+            vector<string> test2;
+            if(imap.count(disp) > 0){
+                test2 = imap.at(disp);
+                string varName = test2.at(0);
+                printedLine.at(3) += varName;
+            }
+        }
+    }
+    if(at == "Immediate"){
+        if (am == "PC"){
+            //disp = TA + (PC)
+            string iTA = objct.substr(3,3);
+            int intTA = HexStringtoDec(iTA);
+            int intDisp = intTA + valPC;
+            string disp = DecToHex(intDisp);
+            vector<string> test2;
+            if(imap.count(disp) > 0){
+                test2 = imap.at(disp);
+                string varName = test2.at(0);
+                printedLine.at(3) += varName;
+            }
+        }
+        if(form == "4"){
+            string iTA = objct.substr(4,4);
+            int intTA = HexStringtoDec(iTA);
+            int intDisp = intTA;
+            string disp = DecToHex(intDisp);
+            vector<string> test2;
+            if(imap.count(disp) > 0){
+                test2 = imap.at(disp);
+                string varName = test2.at(0);
+                printedLine.at(3) += varName;
+            }
+        }
+    }
+    if(at == "Indirect"){
+        if (am == "PC"){
+            //disp = ((TA)) + (PC)
+            string iTA = objct.substr(3,3);
+            int intTA = HexStringtoDec(iTA);
+            int intDisp = intTA + valPC;
+            string disp = DecToHex(intDisp);
+            vector<string> test2;
+            if(imap.count(disp) > 0){
+                test2 = imap.at(disp);
+                string varName = test2.at(0);
+                printedLine.at(3) += varName;
+            }
+        }
+        if (am == "Base"){
+            string iTA = objct.substr(3,3);
+            int intTA = HexStringtoDec(iTA);
+            int intDisp = intTA + valBase;
+            string disp = DecToHex(intDisp);
+            vector<string> test2;
+            if(imap.count(disp) > 0){
+                test2 = imap.at(disp);
+                string varName = test2.at(0);
+                printedLine.at(3) += varName;
+            }
+        }
+    }
+    if(imap.count(loctr) > 0 ){
+        test1 = imap.at(loctr);
+        //TODO: check up on this literal statement later
+        if(imap.count(loctr)>0 & test1.at(1).front()=='='){
+            printedLine.at(0) += " LTORD ";
+        }
+    }
+    //checks if the variable defined in the symbol table hashmap matches a literal
+
+    if(imap.count(loctr) > 0){
+        printedLine.at(1) = test1.at(0);
+    }
+    loctr = DecToHex(intLoc);
+    printedLine.at(0) = loctr;
+    printedLine.at(1) += "";
+    printedLine.at(2) += ins;
+    printedLine.at(3) += "";
+    printedLine.at(4) = objct;
+
+    string finalLine;
+    for(int i=0; i < printedLine.size(); i++){
+        finalLine += printedLine.at(i);
+        finalLine += "    ";
+    }
+    if(ins == "LDB"){
+        finalLine += '\n';
+        finalLine += "                BASE    " + varName;
+    }
+
+
+
+    return finalLine;
+
+}
+
+/*string Dissassembler(string T){
     int lti;
     int infoIndex;
     string fieldLen = T.substr(lti, 2);
@@ -305,21 +515,26 @@ string Dissassembler(string T){
     }
     
 }
+ */
 
-string TextRecordHandler(string *T){//this is where we'll be calling all of our previously made algorithms
+/*string TextRecordHandler(string *T){//this is where we'll be calling all of our previously made algorithms
     //First handling the location counter
     //TODO: fix these iterators of for loops
     for (int i=0; i < T[i].length(); i++){
         Dissassembler(T[i]);
     }
     //return statement will be the locctr, info, opcode, and other info, and object code
-}
+}*/
 
 int main(int argc, char *argv[]) {
     std::cout << "Hello, World!" << std::endl;
+
+
+    //std::cout << std::setfill('0') << std::setw(4) << poo + 12 << endl;
+
     string line;
     ifstream test2obj_file;
-    ifstream test2sym_file;
+
     //test2obj_file.open("C:\\Users\\forem\\CLionProjects\\PA2\\cmake-build-debug\\CMakeFiles\\test2.obj");
 
     //for(int i = 1; i < argc; i++) {
@@ -332,35 +547,51 @@ int main(int argc, char *argv[]) {
      *
      */
     string Header;
-    string* Text; //TODO: make size of this array explicit to prevent memory leak
+    string HName;
+    string HStart;
+    string HEnd;
+    vector<string> Text;  //TODO: make size of this array explicit to prevent memory leak
     string* M;
     string EndRecord;
+    int tlineCount=0;
+    test2obj_file.open("test2.obj.obj");
 
-    /*
     if(test2obj_file.is_open()){
         for (int i = 1; !test2obj_file.eof() ; i++){ //parses through entire file
             getline(test2obj_file, line); //reads file line by line
-
             char hLineIndicator = 'H';
             char tLineIndicator = 'T';
-            char mLineIndicator = 'M';
+            //char mLineIndicator = 'M'; unneeded for now
             char eLineIndicator = 'E';
             if (hLineIndicator == line.front()){ //checks for H being first char
-                Header += line + "\n"; //TextLine becomes line with T
+                Header += line; //headerLine becomes line with H
+                char A[line.length() + 1];
+                strcpy(A, line.c_str());
+                int j=1;
+                int index2=1;
+                while(A[j]!='0'){
+                    HName += A[j];
+                    index2++;
+                    j++;
+                }
+                HStart = line.substr(index2, 6);
+                HEnd = line.substr(index2 + 6, 6);
+
             }
             if (tLineIndicator == line.front()){ //checks for H being first char
-                Text[i] = line; //TextLine becomes line with T
+                Text.push_back(line); //TextLine becomes line with T
+                tlineCount++;
             }
-            if (mLineIndicator == line.front()){ //checks for H being first char
-                M[i] = line; //TextLine becomes line with T
-            }
+            //if (mLineIndicator == line.front()){ //checks for H being first char
+             //   M[i] = line; //TextLine becomes line with T
+            //}
             if (eLineIndicator == line.front()){ //checks for H being first char
-                EndRecord += line + "\n"; //TextLine becomes line with T
+                EndRecord += line; //TextLine becomes line with T
             }
         }
         test2obj_file.close(); //stops file stream
-    } */
-
+    }
+    else cout << "unable to open test.obj";
 
     //string* Symbols;
     //string* Literals;
@@ -368,8 +599,9 @@ int main(int argc, char *argv[]) {
      * hashmap is started with a key being a string(locCtr), then data being a vector in the form:
      * vector<string> = {0[name], 1[lit_const], 2[length], 3[address], 4[objcode]}
      */
-
-    string locCtr;
+    ifstream test2sym_file;
+    string locCtr = "0000";
+    //locCtr << setfill('0') << setw(4);
     string iName = "";
     string iLit = "";
     string iLength = "";
@@ -487,13 +719,212 @@ int main(int argc, char *argv[]) {
      * -calling the symbol and literal table to establish what is going on, then printing correctly into output.
      */
 
-    //call text record handler function
-    //will read through text record arrays, starting from first, then call and read it basically.
-    //TextRecordHandler(Text);
-    string TextLine;
-    string TextLine2;
-    string TextLine3;
-    string TextLine4; //may not be used
-    string info = TextRecordHandler(Text);
+    //while(i < lineCount)
+    ofstream logan;
+    logan.open("out4.lst");
+    logan << " UR A SHITHEAD  " << endl;
+    string HeaderLine;
+    HeaderLine+= HStart.substr(2,4) + "  START 0";
+    HeaderLine += '\n';
+    logan << HeaderLine;
+
+    string finalLine;
+    locCtr = "0000";
+
+    int j = 0;
+    int i = 0;
+    int q = 0;
+    while (j < tlineCount){
+        int LIndex = 7;
+        int infoIndex = 9;
+        string fieldLen = Text.at(j).substr(LIndex, 2);
+        uint32_t lengthDec;
+        lengthDec = HexStringtoDec(fieldLen);
+        int numDigits = 2*lengthDec;
+        int i = 0;
+        string iLine = Text.at(j).substr(infoIndex, numDigits);
+        string startingAddress = Text.at(q).substr(3, 4);
+        int startAddy = HexStringtoDec(startingAddress);
+        char A[iLine.length() + 1];
+        strcpy(A, iLine.c_str());
+        string instruction, format, oat, taam = "";
+        //locCtr = DecToHex(intLC);
+        int intLC = HexStringtoDec(locCtr);
+        while (i < iLine.length()) {
+            //TODO: before we start reading lines of instruction, we gotta check for char and symbol declarations...
+            locCtr = DecToHex(intLC);
+            startAddy = HexStringtoDec(startingAddress);
+            if (map.count(locCtr) > 0 && startingAddress != locCtr  ) {
+                //will print info from symtable on instruction sheet if theres no correspondinb iinstruction to it
+                vector<string> getRekt = map.at(locCtr);
+                finalLine += locCtr;
+                finalLine += "  ";
+                finalLine += getRekt.at(0);
+                if (getRekt.at(2) == "" || getRekt.at(2) == " ") {
+                    finalLine += "  RESB  ";
+                    //logic to get amount of size reserved
+                    //how we gon do dat?
+                    //search through the hashtable to find the subsequent key after the one we're on
+                    //if t has not yet been written, we'll use it.
+                    unordered_map<string, vector<string>>::iterator it = map.begin();
+                    string saved;
+                    // Iterating over the map using Iterator till map end.
+                    while (it != map.end()) {
+                        // Accessing the key
+                        string word = it->first;
+                        int wWord = HexStringtoDec(word);
+                        if (wWord < startAddy && wWord >= intLC) {
+                            //if there exists a hashed addy less than startaddy but greater than locctr then theres 2
+                            //for ex this is the 02C6 RETARD
+                            //saved += word + ' ';
+                            //if saved exists, we'll perform subtraction to find exact length of the two
+                            if(wWord == intLC){
+                                int temp1 = HexStringtoDec(word);
+                                int temp2 = startAddy;
+                                int temp3 = temp2 - temp1;
+                                string s2 = to_string(temp3);
+                                intLC += temp3;
+                                finalLine += s2;
+                                finalLine += '\n';
+                                locCtr = DecToHex(intLC);
+                            }else{
+                                int temp1 = HexStringtoDec(word);
+                                int temp2 = HexStringtoDec(locCtr);
+                                int temp3 = temp1 - temp2;
+                                //this'll give us (in decimal) the amount bytes stored
+                                string s2 = to_string(temp3);
+                                intLC += temp3;
+                                finalLine += s2;
+                                finalLine += '\n';
+                                locCtr = DecToHex(intLC);
+                            }
+                        }
+                        if (tlineCount - j == 1 || getRekt.at(0).front() == 'E') {
+                            //if its near the end it might be a final storage like EADR
+                            saved += word + ' ';
+                            //if saved exists, we'll perform subtraction to find exact length of the two
+                            int temp1 = HexStringtoDec(locCtr);
+                            int temp2 = HexStringtoDec(HEnd);
+                            int temp3 = temp1 - temp2;
+                            //this'll give us (in decimal) the amount bytes stored
+                            string s = to_string(temp3);
+
+                            finalLine += s;
+                            finalLine += '\n';
+                        }
+                        // iterator incremented to point next item
+                        it++;
+                    }
+                    logan << finalLine << endl;
+
+
+                } else {
+                    finalLine += "  BYTE  ";
+                    finalLine += getRekt.at(1);
+
+                    if(map.count(locCtr) > 0){
+                        vector<string> poop = map.at(locCtr);
+                        string temp4 = poop.at(2);
+                        locCtr += temp4;
+                    }
+                    logan << finalLine << endl;
+                }
+            } else {
+
+
+                locCtr = DecToHex(intLC);
+                bool e; //'e' flag bit bool
+                int z = int_hex_char_to_bin(A[i + 2]); //helper function with hex table
+                if (z & 0001) //bitmask operation to check for odd number
+                    e = true;
+                else e = false;
+
+                string obj;
+                if (e) {//format 4
+                    for (int k = i; k < i + 8; k++) {
+                        obj = obj + A[k];
+                    }
+                    i += 8;
+                    cout << obj << endl;
+                    instruction = findInstr(obj);
+                    oat = findOAT(obj);
+                    taam = findTAAM4(obj);
+                    format = "4";
+                    locCtr = DecToHex(intLC);
+                    finalLine = printDat(locCtr, instruction, oat, taam, format, obj, map);
+                    intLC += 4;
+                } else {//format 2 or 3
+                    bool z = false; //bool z: indicates in if format 2 or not
+                    if (A[i] == '9' || A[i] == 'A' || A[i] == 'B') {
+                        for (int k = i; k < i + 4; k++) {
+                            obj += A[k];
+                            z = true;
+                        }
+                        i+=4;
+                        format = "2";
+                        //intLC += 2;
+                        instruction = findInstr(obj);
+                        oat = findOAT(obj);
+                        taam = findTAAM3(obj);
+
+
+                        locCtr = DecToHex(intLC);
+                        finalLine = printDat(locCtr, instruction, oat, taam, format, obj, map);
+                        intLC += 2;
+                    }else if (z == false) {
+                        for (int k = i; k < i + 6; k++) {
+                            obj = obj + A[k];
+                        }
+                        //intLC += 3;
+                        i+=6;
+                        format = "3";
+                        cout << obj << endl;
+                        instruction = findInstr(obj);
+                        oat = findOAT(obj);
+                        taam = findTAAM3(obj);
+
+
+                        locCtr = DecToHex(intLC);
+                        finalLine = printDat(locCtr, instruction, oat, taam, format, obj, map);
+                        intLC += 3;
+
+                    }
+
+                }
+                //do something here to print the current line were on
+
+                //string printedLine = "";
+                //printedLine += locCtr;
+                //0000 FIRST   +LDB    #RETADR       691002C6
+                logan << finalLine << endl;//***what well write to fle
+                //j++;
+            }
+        }
+        finalLine = "";
+        locCtr = DecToHex(intLC);
+        q++;
+        j++;
+    }
+
+
+    //string info = TextRecordHandler(Text);
+        //loop until end of text record or end records line{
+        /*
+         * each iteration do the following:
+         * print symbols:
+         * -LOCCTR
+         * -symbols / literals if matches locctr\
+         * -opcode
+         * -name of variable or instruction
+         * -object code
+         *
+         *
+         */
+    //for(int i = 0; i < Text->length(); i++){
+     //   cout <<
+    //}
+
+    logan << "              END   " + HName;
+    logan.close();
     return 0;
 }
