@@ -14,20 +14,10 @@
 #include <vector>
 #include <iomanip>
 #include <cctype>
-
+//For Every instruction with a displacement, you have to get/check TA for symbol/constant checks
 using namespace std;
+
 //all helper functions
-//Lets say LOCCTR is established at 0000, based on readinig the text lines starting address
-//itll be 0000 for locCtr, th
-/*
- * alright, this should be the order:
- * 1)we read text line to see the starting address and the length of that line
- * example: sees 0000, locCtr = 0000. sees 0A, sets tLength to 0d10
- * 2)THEN, will read first instruction: 691002C6. calls regular operations on it to dissassemble it
- * -> will return format, opcode(with '+'), addy mode, addy type (#,@), object code
- * 3)after dis-assembling and storing data from 691002C6, check test2.sym's tables (WHICH WE HAVE IN ARRAY)
- * -> check
- */
 class Poo {
     //private vs public
 public: //access specifier
@@ -316,6 +306,8 @@ string printDat(string loctr, string ins, string at, string am, string form, str
     if(at == "Simple"){
         if(am == "PC"){
             //disp = (TA) + (PC)
+            //TA will be in 2s complement form
+            //TODO: make a conversion from 2s complement for PC instructions
             string iTA = objct.substr(3,3);
             int intTA = HexStringtoDec(iTA);
             int intDisp = intTA + valPC;
@@ -341,6 +333,8 @@ string printDat(string loctr, string ins, string at, string am, string form, str
         }
         //TODO
         if(am == "PC_Indexed"){
+            //TA will be in 2s complement form
+            //TODO: make a conversion from 2s complement for PC instructions
             string iTA = objct.substr(3,3);
             int intTA = HexStringtoDec(iTA);
             int intDisp = intTA + valPC;
@@ -446,7 +440,7 @@ string printDat(string loctr, string ins, string at, string am, string form, str
     }
     if(ins == "LDB"){
         finalLine += '\n';
-        finalLine += "                BASE    " + varName;
+        finalLine += "                BASE    " + printedLine.at(3);
     }
 
 
@@ -513,7 +507,7 @@ string printDat(string loctr, string ins, string at, string am, string form, str
             format = "3";
         }
     }
-    
+
 }
  */
 
@@ -554,7 +548,7 @@ int main(int argc, char *argv[]) {
     string* M;
     string EndRecord;
     int tlineCount=0;
-    test2obj_file.open("test2.obj.obj");
+    test2obj_file.open("test21.obj");
 
     if(test2obj_file.is_open()){
         for (int i = 1; !test2obj_file.eof() ; i++){ //parses through entire file
@@ -583,7 +577,7 @@ int main(int argc, char *argv[]) {
                 tlineCount++;
             }
             //if (mLineIndicator == line.front()){ //checks for H being first char
-             //   M[i] = line; //TextLine becomes line with T
+            //   M[i] = line; //TextLine becomes line with T
             //}
             if (eLineIndicator == line.front()){ //checks for H being first char
                 EndRecord += line; //TextLine becomes line with T
@@ -666,10 +660,10 @@ int main(int argc, char *argv[]) {
                     j++;
                 }
                 //cout << iName << endl;
-               // cout << iAddress << endl;
+                // cout << iAddress << endl;
                 //cout << iLit << endl;
                 //cout << iLength << endl;
-               // cout << iObjCode << endl;
+                // cout << iObjCode << endl;
                 try {
                     //here we will add the specified info from each line into a vector
                     locCtr = iAddress.substr(2, 4);
@@ -753,11 +747,12 @@ int main(int argc, char *argv[]) {
         while (i < iLine.length()) {
             //TODO: before we start reading lines of instruction, we gotta check for char and symbol declarations...
             locCtr = DecToHex(intLC);
+
             startAddy = HexStringtoDec(startingAddress);
             if (map.count(locCtr) > 0 && startingAddress != locCtr  ) {
                 //will print info from symtable on instruction sheet if theres no correspondinb iinstruction to it
                 vector<string> getRekt = map.at(locCtr);
-                finalLine += locCtr;
+                finalLine = locCtr;
                 finalLine += "  ";
                 finalLine += getRekt.at(0);
                 if (getRekt.at(2) == "" || getRekt.at(2) == " ") {
@@ -825,7 +820,12 @@ int main(int argc, char *argv[]) {
                     if(map.count(locCtr) > 0){
                         vector<string> poop = map.at(locCtr);
                         string temp4 = poop.at(2);
-                        locCtr += temp4;
+                        int temp5 = HexStringtoDec(temp4);
+                        intLC += temp5;
+                        locCtr = DecToHex(intLC);
+
+
+                        i+= HexStringtoDec(temp4);
                     }
                     logan << finalLine << endl;
                 }
@@ -908,20 +908,20 @@ int main(int argc, char *argv[]) {
 
 
     //string info = TextRecordHandler(Text);
-        //loop until end of text record or end records line{
-        /*
-         * each iteration do the following:
-         * print symbols:
-         * -LOCCTR
-         * -symbols / literals if matches locctr\
-         * -opcode
-         * -name of variable or instruction
-         * -object code
-         *
-         *
-         */
+    //loop until end of text record or end records line{
+    /*
+     * each iteration do the following:
+     * print symbols:
+     * -LOCCTR
+     * -symbols / literals if matches locctr\
+     * -opcode
+     * -name of variable or instruction
+     * -object code
+     *
+     *
+     */
     //for(int i = 0; i < Text->length(); i++){
-     //   cout <<
+    //   cout <<
     //}
 
     logan << "              END   " + HName;
