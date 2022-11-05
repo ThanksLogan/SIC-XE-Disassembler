@@ -17,24 +17,6 @@
 //For Every instruction with a displacement, you have to get/check TA for symbol/constant checks
 using namespace std;
 
-//all helper functions
-class Poo {
-    //private vs public
-public: //access specifier
-    string locCtr;
-    string symName;
-    string opCode;
-    string varName;
-    string objCode;
-    /*TODO:
-     * void getters;
-     * void setters/printers
-    */
-    void printer() {
-        cout << "printing from Poo class" << endl;
-    }
-
-};
 string baseName;
 string hexToBinary = "0123456789ABCDEF";
 int HexStringtoDec(string A){ //translates a given hex string to its decimal value for computations.
@@ -298,8 +280,6 @@ string printDat(string iflag,string loctr, string ins, string at, string am, str
     if(at == "Indirect")
         printedLine.at(3) += '@';
     if(am == "Indexed" || am == "Base_Indexed" ||am == "PC_Indexed"){
-        //TODO: iterate through map to find where return address will be
-        //test1 = imap.at("02C6");
         printedLine.at(3) += baseName;
         printedLine.at(3) += ",X";
     }
@@ -310,7 +290,6 @@ string printDat(string iflag,string loctr, string ins, string at, string am, str
     //we'll make a quick guide: simple and PC: disp = TA + PC = 02C6 (which is where RETARD is hosted) in table
     //thus, we'll add it to column 3 of the printed line vector
     //a couple other conditons: if its simple, but not pc or base it could just be TA
-
     if(at == "Simple"){
         if(am == "PC"){
             //disp = (TA) + (PC)
@@ -509,17 +488,14 @@ string printDat(string iflag,string loctr, string ins, string at, string am, str
     for(int i=0; i < printedLine.size(); i++){
         finalLine += printedLine.at(i);
         finalLine += "    ";
+        //cout << setw(8)<<left<<printedLine.at(i);
     }
     if(ins == "LDB"){
         finalLine += '\n';
         baseName = printedLine.at(3).substr(1, printedLine.at(3).length()-1);
         finalLine += "           BASE    " + printedLine.at(3).substr(1, printedLine.at(3).length()-1);
     }
-
-
-
     return finalLine;
-
 }
 vector<string> Disassembler(int i,string iflag, string locationCounter, int intLocationCounter, char A[], unordered_map<string, vector<string>> mappith, string iFinalLine){
     vector<string> returners;
@@ -594,15 +570,16 @@ vector<string> Disassembler(int i,string iflag, string locationCounter, int intL
 
 int main(int argc, char *argv[]) {
     //std::cout << std::setfill('0') << std::setw(4) << poo + 12 << endl;
-    string objFile = "testB.obj";
-    string symFile = "testB.sym";
+    ofstream logan;
+    logan.open("output_file.lst");
+    string objFile;
+    string symFile;
     string line;
     ifstream test2obj_file;
-    //test2obj_file.open("C:\\Users\\forem\\CLionProjects\\PA2\\cmake-build-debug\\CMakeFiles\\test2.obj");
-    //for(int i = 1; i < argc; i++) {
-    //    ifstream test2obj_file(argv[i]);
-    //    ifstream test2sym_file(argv[i+1]);
-    //}
+    ifstream test2sym_file;
+    objFile = argv[1];
+    symFile = argv[2];
+
     /*
      * THIS WILL READ in the file and put the data into string array or string variables to store
      */
@@ -637,9 +614,6 @@ int main(int argc, char *argv[]) {
                 Text.push_back(line); //TextLine becomes line with T
                 tlineCount++;
             }
-            //if (mLineIndicator == line.front()){ //checks for H being first char
-            //   M[i] = line; //TextLine becomes line with T
-            //}
             if (eLineIndicator == line.front()){ //checks for H being first char
                 EndRecord += line; //TextLine becomes line with T
             }
@@ -651,20 +625,14 @@ int main(int argc, char *argv[]) {
      * hashmap is started with a key being a string(locCtr), then data being a vector in the form:
      * vector<string> = {0[name], 1[lit_const], 2[length], 3[address], 4[objcode]}
      */
-    ifstream test2sym_file;
     string locCtr = "0000";
-    //locCtr << setfill('0') << setw(4);
     string iName, iLit, iLength, iAddress, iObjCode = "";
     int cnt, cnt2 = 0;
     unordered_map<string, vector<string>> map;
     test2sym_file.open(symFile);
     if(test2sym_file.is_open()) {
         for (int i=1; !test2sym_file.eof(); i++ ){
-            iName = "";
-            iLit = "";
-            iLength = "";
-            iAddress = "";
-            iObjCode = "";
+            iName = "";iLit = "";iLength = "";iAddress = "";iObjCode = "";
             getline(test2sym_file, line); //reads file line by line
             int j = 0;
             cnt = 0;
@@ -735,8 +703,8 @@ int main(int argc, char *argv[]) {
         }
         std::cout << std::endl;
     }
-    ofstream logan;
-    logan.open("outLogan.lst");
+    //ofstream logan;
+    //logan.open("outLogan.lst");
     string HeaderLine;
     HeaderLine+= HStart.substr(2,4)+ " " + HName + "  START 0";
     HeaderLine += '\n';
@@ -841,7 +809,7 @@ int main(int argc, char *argv[]) {
                         minLit = currLit;
                         minIntLit = HexStringtoDec(minLit);
                     }
-                        //minLit = currLit;
+                    //minLit = currLit;
                     cout << minLit << endl;
 
                 }
@@ -893,7 +861,7 @@ int main(int argc, char *argv[]) {
                             finalLine += s2;
                             //finalLine += '\n';
                             locCtr = DecToHex(intLC);
-                        } else {
+                        } else{
                             int temp1 = HexStringtoDec(word);
                             int temp2 = HexStringtoDec(locCtr);
                             int temp3 = temp1 - temp2;
@@ -921,7 +889,7 @@ int main(int argc, char *argv[]) {
                         string s = to_string(temp3);
                         intLC += temp3;
                         finalLine += s;
-                        finalLine += '\n';
+                        //finalLine += '\n';
 
                         locCtr = DecToHex(intLC);
                         break;
@@ -929,7 +897,6 @@ int main(int argc, char *argv[]) {
                     // iterator incremented to point next item
                     it++;
                 }
-                //logan << finalLine << endl;
             }
             if(symFirst){ //symbol for FIRST/beginning of program
                 vector<string> disassembled = Disassembler(i,symFirstS, locCtr, intLC, A, map, finalLine);
@@ -975,15 +942,27 @@ int main(int argc, char *argv[]) {
                     if(temp8.at(5).substr(0,5) == "LTORG"){
                         finalLine = "   LTORG";
                         finalLine += '\n';
+
+                        finalLine += locCtr;
+                        if (pp.at(0) == ""){
+                            finalLine += "          *      ";
+                        }
+                        finalLine += " " + pp.at(0);
+
+                        finalLine += " ";
                     }
+                }else{
+                    finalLine = locCtr;
+                    if (pp.at(0) == ""){
+                        finalLine += "         *      ";
+                    }
+                    finalLine += "  " + pp.at(0);
+                    finalLine += " ";
                 }
 
-                finalLine += locCtr;
-                finalLine += "  " + pp.at(0);
-                finalLine += " ";
-                if (pp.at(0) == ""){
-                    finalLine += " * ";
-                }
+                //finalLine += '\n';
+
+
                 finalLine += pp.at(1);
                 //if(map.count(locCtr) > 0){
                 vector<string> poop = map.at(locCtr);
@@ -1016,7 +995,6 @@ int main(int argc, char *argv[]) {
             }
             if(regular){
                 vector<string> disassembled = Disassembler(i,regularS, locCtr, intLC, A, map, finalLine);
-
                 intLC = HexStringtoDec(disassembled.at(2)); //updates location counter after call
                 i = stoi(disassembled.at(0)); //disassembler returns amount to increase i for while loop.
                 finalLine = disassembled.at(3);
