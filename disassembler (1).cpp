@@ -1,7 +1,6 @@
 /*
- * Logan Foreman
- * RedID: 825056655
- * CS530 - Professor Kai Li
+ * Logan F
+ * CS530 - Professor Li
  */
 #include <iostream>
 #include <fstream>
